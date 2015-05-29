@@ -56,7 +56,7 @@ endif
 OBJECTS = crecord.o ctable.o endpoint.o srpc.o stable.o tslist.o
 PROGRAMS = mthclient\$(EXT) callbackserver\$(EXT) callbackclient\$(EXT) echoserver\$(EXT) echoclient\$(EXT) sinkclient\$(EXT) sgenclient\$(EXT) sinktest\$(EXT) conntest\$(EXT)
 
-LIBS = -lpthread
+LIBS = -pthread
 CFLAGS=\$(CFL_COMMON) \$(OPT)
 LDFLAGS = \$(LFL_COMMON)
 
@@ -77,6 +77,10 @@ libsrpc.a: \$(OBJECTS)
 	rm -f libsrpc.a
 	ar r libsrpc.a \$(OBJECTS)
 	ranlib libsrpc.a
+
+install: libsrpc.a
+	cp libsrpc.a /usr/local/lib/
+	cp srpc.h endpoint.h logdefs.h /usr/local/include/
 
 mthclient.o: mthclient.c srpc.h
 callbackserver.o: callbackserver.c callback.h srpc.h
