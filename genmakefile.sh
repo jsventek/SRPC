@@ -80,6 +80,7 @@ libsrpc.a: \$(OBJECTS)
 
 install: libsrpc.a
 	cp libsrpc.a /usr/local/lib/
+	cp srpc.h endpoint.h logdefs.h /usr/local/include/
 
 mthclient.o: mthclient.c srpc.h
 callbackserver.o: callbackserver.c callback.h srpc.h
