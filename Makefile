@@ -1,14 +1,14 @@
 # Makefile for Glasgow SRPC system
-# Customized for work-surface running CYGWIN_NT-6.3 on Wed, May 27, 2015 11:22:45 AM
+# Customized for fergus-Ubuntu running Linux on Fri May 29 10:32:54 BST 2015
 # 
-OS=Cygwin
+OS=Linux
 # Template makefile for Glasgow SRPC system
 #
 # Conditionalized upon the value of $(OS) - if unspecified in the command
 # line, OS is assumed to be the value defined above
 #
 # e.g.
-#      make			# makes appropriate binaries for Windows_NT
+#      make			# makes appropriate binaries for Linux
 #      make OS=Cygwin 		# makes appropriate binaries for Cygwin
 #      make OS=Darwin 		# makes appropriate binaries for OSX
 #      make OS=Linux 		# makes appropriate binaries for Linux
@@ -36,7 +36,7 @@ endif
 OBJECTS = crecord.o ctable.o endpoint.o srpc.o stable.o tslist.o
 PROGRAMS = mthclient$(EXT) callbackserver$(EXT) callbackclient$(EXT) echoserver$(EXT) echoclient$(EXT) sinkclient$(EXT) sgenclient$(EXT) sinktest$(EXT) conntest$(EXT)
 
-LIBS = -lpthread
+LIBS = -pthread
 CFLAGS=$(CFL_COMMON) $(OPT)
 LDFLAGS = $(LFL_COMMON)
 
@@ -57,6 +57,9 @@ libsrpc.a: $(OBJECTS)
 	rm -f libsrpc.a
 	ar r libsrpc.a $(OBJECTS)
 	ranlib libsrpc.a
+
+install: libsrpc.a
+	cp libsrpc.a /usr/local/lib/
 
 mthclient.o: mthclient.c srpc.h
 callbackserver.o: callbackserver.c callback.h srpc.h
