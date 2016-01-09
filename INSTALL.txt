@@ -1,0 +1,16 @@
+SRPC uses the GNU Autoconf system for configuration and building
+
+To generate the configure script:
+autoreconf -if
+
+If autoreconf complains about libtool problems... run libtoolize first
+libtoolize
+
+After generating the configure script,
+./configure --help
+will list configuration options.
+
+After successfully completing an execution of the configure script, Makefiles will be generated in the correct directories and make can be used to build and install the software.
+make clean
+make
+make install

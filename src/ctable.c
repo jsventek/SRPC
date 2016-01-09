@@ -77,6 +77,11 @@ unsigned long ctable_newSubport(void) {
         ctr = 1;
     pid = getpid();
     subport = (pid & 0xffff) << 16 | ctr;
+    // FIXME: black magic
+    // patch to address connection failures on some systems...
+    // Not sure what the actual pathology is; assume inconsistency in
+    // signed vs unsigned integers
+    subport = subport & 0xffffffff;
     return subport;
 }
 
