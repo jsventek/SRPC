@@ -74,6 +74,11 @@ int rpc_init(unsigned short port);
 void rpc_details(char *ipaddr, unsigned short *port);
 
 /*
+ * reverse lookup of ip address (as a string) to fully-qualified hostname
+ */
+void rpc_reverselu(char *ipaddr, char *hostname);
+
+/*
  * send connect message to host:port with initial sequence number
  * svcName indicates the offered service of interest
  * returns 1 after target accepts connect request

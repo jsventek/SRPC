@@ -644,6 +644,17 @@ void rpc_details(char *ipaddr, unsigned short *port) {
     *port = my_port;
 }
 
+void rpc_reverselu(char *ipaddr, char *hostname) {
+    struct hostent *hp;
+    struct in_addr addr;
+
+    inet_aton(ipaddr, &addr);
+    if ((hp = gethostbyaddr((void *)&addr, sizeof(addr), AF_INET)) != NULL)
+        strcpy(hostname, hp->h_name);
+    else
+        strcpy(hostname, ipaddr);
+}
+
 static RpcEndpoint *rpc_socket(char *host, unsigned short port,
                                unsigned long subport) {
     RpcEndpoint *s;
