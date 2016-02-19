@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
         i = j + 1;
     }
 
-    assert(rpc_init(port));
+    assert(rpc_init("localhost", port));
     rps = rpc_offer(service);
     if (rps == NULL) {
         fprintf(stderr, "Failure offering Echo service\n");
