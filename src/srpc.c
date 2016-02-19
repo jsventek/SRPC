@@ -577,21 +577,30 @@ static int common_init(unsigned short port) {
     return 1;
 }
 
-int rpc_init(unsigned short port) {
+int rpc_init(char *hostname, unsigned short port) {
     char host[128];
     struct hostent *hp;
 
     debugf("rpc_init() entered\n");
     ctable_init();
     stable_init();
-    gethostname(host, 128);
-    hp = gethostbyname(host);
+
+    if (hostname != NULL) {
+        hp = gethostbyname(hostname);
+    } else {
+        gethostname(host, 128);
+        hp = gethostbyname(host);
+    }
+
     if (hp != NULL) {
         struct in_addr tmp;
         memcpy(&tmp, hp->h_addr_list[0], hp->h_length);
         strcpy(my_name, inet_ntoa(tmp));
     } else
         strcpy(my_name, "127.0.0.1");
+
+    debugf("rpc_init() hostname resolution: %s %s\n",
+          (hostname ? hostname : host), my_name);
     return common_init(port);
 }
 

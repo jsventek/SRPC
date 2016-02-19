@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         }
         i = j + 1;
     }
-    assert(rpc_init(0));
+    assert(rpc_init("localhost", 0));
     if ((rpc = rpc_connect(host, port, service, 0)) == NULL) {
         fprintf(stderr, "Failure to connect to %s at %s:%05u\n",
                 service, host, port);

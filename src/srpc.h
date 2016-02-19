@@ -58,11 +58,16 @@ struct qdecl {
 #define Q_Arg(QUERY) (&QUERY ## _struct)
 
 /*
- * initialize RPC system - bind to ‘port’ if non-zero
+ * initialize RPC system
+ *
+ * bind to hostname/ip if not NULL
+ * otherwise binds to system hostname
+ *
+ * bind to port if non-zero
  * otherwise port number assigned dynamically
  * returns 1 if successful, 0 if failure
  */
-int rpc_init(unsigned short port);
+ int rpc_init(char *hostname, unsigned short port);
 
 /*
  * the following methods are used by RPC clients
@@ -90,7 +95,7 @@ RpcConnection rpc_connect(char *host, unsigned short port,
 /*
  * make the next RPC call, waiting until response received
  * must be invoked as rpc_call(rpc, Q_Arg(query), qlen, resp, rsize, &rlen)
- * upon successful return, ‘resp’ contains ‘rlen’ bytes of data
+ * upon successful return, ï¿½respï¿½ contains ï¿½rlenï¿½ bytes of data
  * returns 1 if successful, 0 otherwise
  */
 int rpc_call(RpcConnection rpc, const struct qdecl *query, unsigned qlen,
@@ -133,8 +138,8 @@ void rpc_withdraw(RpcService rps);
 unsigned rpc_query(RpcService rps, RpcEndpoint *ep, void *qb, unsigned len);
 
 /*
- * send the next response message to the ‘ep’
- * ‘rb’ contains the response to return to the caller
+ * send the next response message to the ï¿½epï¿½
+ * ï¿½rbï¿½ contains the response to return to the caller
  * returns 1 if successful
  * returns 0 if there is a massive failure in the system
  */
