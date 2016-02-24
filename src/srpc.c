@@ -41,11 +41,13 @@
 #include "ctable.h"
 #include "crecord.h"
 #include "stable.h"
+#include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
@@ -110,7 +112,7 @@ typedef struct dp {		/* template for data payload */
 
 static struct sockaddr_in my_addr;	/* our address information */
 static int my_sock;
-static char my_name[16];
+static char my_address[16];
 static unsigned short my_port;
 static const struct timespec one_tick = {0, 20000000}; /* one tick is 20 ms */
 static pthread_t readThread = NULL;
@@ -577,21 +579,106 @@ static int common_init(unsigned short port) {
     return 1;
 }
 
+/*
+ * obtain most globally visible IPv4 address for this host
+ *
+ * using the interfaces returned by getifaddrs(), determine the most
+ * globally visible IPv4 address for this host, returning it as a string
+ * in the buffer provided
+ *
+ * every host has a loopback (127.0.0.1) - this is the least globally visible
+ *
+ * a host might have an address in a private address space; three private
+ * address spaces are defined by the IANA (RFC 1918)
+ *
+ * 10.0.0.0    - 10.255.255.255  (10/8 prefix, 0x0A000000)
+ * 172.16.0.0  - 172.31.255.255  (172.16/12 prefix, 0xAC100000)
+ * 192.168.0.0 - 192.168.255.255 (192.168/16 prefix, 0xC0A80000)
+ *
+ * an address in any of these ranges would be the next most globally visible
+ *
+ * finally, a host might also have an address in a public address space (any
+ * not defined as a private address or the loopback class A network).  Such an
+ * address is the most globally visible address for the host.
+ *
+ * Thus, this routine will return a public address, if found; if not, it will
+ * return a private address, if found; if not, it returns the loopback address
+ */
+
+#define A127 1
+#define A192 2
+#define A172 3
+#define A010 4
+#define NUM_ADDRESSES 10
+
+static void get_ipv4_addr(char *buf) {
+    struct ifaddrs *ifaddr, *ifa;
+    unsigned long addresses[NUM_ADDRESSES];
+    int n, i;
+
+    strcpy(buf, "127.0.0.1");	/* default return if any errors */
+    if (getifaddrs(&ifaddr) == -1)
+        return;
+    /*
+     * walk through linked list of interfaces
+     */
+    n = 0;
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        struct sockaddr_in *sin;
+        char tb[16];
+
+	if (ifa->ifa_addr == NULL ||
+                ifa->ifa_addr->sa_family != AF_INET ||
+                !(ifa->ifa_flags & IFF_RUNNING))
+            continue;
+        /*
+         * Have a running interface
+         */
+        sin = (struct sockaddr_in *)ifa->ifa_addr;
+        addresses[n++] = sin->sin_addr.s_addr;
+        if (n >= NUM_ADDRESSES)
+            n = NUM_ADDRESSES - 1;
+    }
+    freeifaddrs(ifaddr);
+    for (i = 0; i < n; i++) {
+        unsigned long tmp;
+        int nt = A127;
+
+        tmp = htonl(addresses[i]);
+        if ((tmp & 0xFF000000) == 0x0A000000) {
+            /* 10.* trumps all other private nets */
+            (void)inet_ntop(AF_INET, addresses+i, buf, 16);
+            nt = A010;
+        } else if ((tmp & 0xFFC00000) == 0xAC100000) {
+            if (nt < A172) {	/* 172.16 trumps 192.168 and 127. */
+                nt = A172;
+                (void)inet_ntop(AF_INET, addresses+i, buf, 16);
+            }
+        } else if ((tmp & 0xFFFF0000) == 0xC0A80000) {
+            if (nt < A192) {	/* 192.168 trumps 127. */
+                nt = A192;
+                (void) inet_ntop(AF_INET, addresses+i, buf, 16);
+            }
+        } else {
+            /* if we get here, we have a public address */
+            (void)inet_ntop(AF_INET, addresses+i, buf, 16);
+            return;
+        }
+    }
+    return;
+}
+
 int rpc_init(unsigned short port) {
-    char host[128];
-    struct hostent *hp;
+    char *s = getenv("CACHE_IPV4_ADDRESS");
 
     debugf("rpc_init() entered\n");
     ctable_init();
     stable_init();
-    gethostname(host, 128);
-    hp = gethostbyname(host);
-    if (hp != NULL) {
-        struct in_addr tmp;
-        memcpy(&tmp, hp->h_addr_list[0], hp->h_length);
-        strcpy(my_name, inet_ntoa(tmp));
-    } else
-        strcpy(my_name, "127.0.0.1");
+    if (s != NULL) {
+        strcpy(my_address, s);
+    } else {
+        get_ipv4_addr(my_address);
+    }
     return common_init(port);
 }
 
@@ -640,10 +727,13 @@ void rpc_resume() {
 }
 
 void rpc_details(char *ipaddr, unsigned short *port) {
-    strcpy(ipaddr, my_name);
+    strcpy(ipaddr, my_address);
     *port = my_port;
 }
 
+/*
+ * this routine needs to be rewritten to use gethostinfo
+ */
 void rpc_reverselu(char *ipaddr, char *hostname) {
     struct hostent *hp;
     struct in_addr addr;
