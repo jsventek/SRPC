@@ -33,7 +33,7 @@
  * srpc - a simple UDP-based RPC system
  * originally created to support the Homework event cache
  */
-
+#include "config.h"
 #include "srpc.h"
 #include "srpcdefs.h"
 #include "tslist.h"
