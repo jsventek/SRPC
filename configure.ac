@@ -28,6 +28,10 @@ case $host_os in
         have_darwin="yes"
         AC_DEFINE(HAVE_SOCKADDR_LEN, 1, "socket definition for Darwin based OSes")
         ;;
+    Darwin* )
+        have_darwin="yes"
+        AC_DEFINE(HAVE_SOCKADDR_LEN, 1, "socket definition for Darwin based OSes")
+        ;;
     * )
         have_darwin="no"
         ;;
